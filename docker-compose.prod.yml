@@ -1,0 +1,145 @@
+version: '3.8'
+
+services:
+  # Frontend Application
+  frontend:
+    image: uml-designer-frontend:${VERSION:-latest}
+    container_name: uml-designer-frontend-prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./docker/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - uml-network
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Backend Service (To be replaced with actual backend)
+  backend:
+    image: uml-designer-backend:${VERSION:-latest}
+    container_name: uml-designer-backend-prod
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGIN=${CORS_ORIGIN:-https://yourdomain.com}
+    networks:
+      - uml-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Database
+  db:
+    image: postgres:15-alpine
+    container_name: uml-designer-db-prod
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - uml-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: uml-designer-redis-prod
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - uml-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Backup Service
+  backup:
+    image: postgres:15-alpine
+    container_name: uml-designer-backup
+    restart: "no"
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - PGPASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./backups:/backups
+    networks:
+      - uml-network
+    depends_on:
+      - db
+    command: >
+      sh -c "
+        echo 'Starting backup process...'
+        pg_dump -h db -U ${DB_USER} -d ${DB_NAME} > /backups/backup_$$(date +%Y%m%d_%H%M%S).sql
+        echo 'Backup completed successfully'
+        
+        # Keep only last 7 days of backups
+        find /backups -name '*.sql' -mtime +7 -delete
+      "
+
+  # Monitoring (Optional)
+  monitoring:
+    image: prom/prometheus:latest
+    container_name: uml-designer-monitoring
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - uml-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+
+networks:
+  uml-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
