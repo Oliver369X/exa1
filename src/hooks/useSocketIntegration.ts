@@ -25,7 +25,7 @@ export const useSocketIntegration = ({
     hasLoadedInitialDiagram.current = false;
     
     // Conectar al servidor de sockets
-    const socket = socketService.connect();
+    socketService.connect();
 
     // Limpiar listeners anteriores antes de configurar nuevos
     socketService.removeAllListeners();

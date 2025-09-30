@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import styled, { ThemeProvider, createGlobalStyle } from 'styled-components';
 import UMLDiagramEditor from './components/UMLDiagramEditor';
 import Toolbar from './components/Toolbar';
-import PropertiesPanel from './components/PropertiesPanel';
 import MenuBar from './components/MenuBar';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
@@ -77,7 +76,7 @@ function App() {
   const { selectedTool, selectTool } = useToolbar();
   const [currentView, setCurrentView] = useState<AppView>('login');
   const [selectedSala, setSelectedSala] = useState<string | null>(null);
-  const [diagramState, setDiagramState] = useState<DiagramState | null>(null);
+  const [diagramState, setDiagramState] = useState<DiagramState | undefined>(undefined);
   const editorRef = useRef<any>(null);
 
   useEffect(() => {
@@ -99,13 +98,13 @@ function App() {
 
   const handleSelectSala = (salaId: string) => {
     setSelectedSala(salaId);
-    setDiagramState(null); // Limpiar el diagrama anterior
+    setDiagramState(undefined); // Limpiar el diagrama anterior
     setCurrentView('editor');
   };
 
   const handleBackToSalas = () => {
     setSelectedSala(null);
-    setDiagramState(null); // Limpiar el diagrama al salir
+    setDiagramState(undefined); // Limpiar el diagrama al salir
     setCurrentView('salas');
   };
 

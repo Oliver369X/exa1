@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { salaService, authService } from '../../services/api';
-import { Users, Plus, LogOut, Edit2, Trash2, X } from 'lucide-react';
+import { Users, Plus, LogOut, Edit2, Trash2 } from 'lucide-react';
 
 const Container = styled.div`
   min-height: 100vh;

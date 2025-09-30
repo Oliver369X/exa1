@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
+import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { Stage, Layer, Transformer, Line } from 'react-konva';
 import Konva from 'konva';
 import styled from 'styled-components';
@@ -122,7 +122,6 @@ const UMLDiagramEditor = forwardRef<any, UMLDiagramEditorProps>(({ selectedTool:
   const stageRef = useRef<Konva.Stage>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
   const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
-  const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
   const selectedTool = externalSelectedTool || 'select';
   const [showGrid, setShowGrid] = useState(true);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -602,7 +601,7 @@ const UMLDiagramEditor = forwardRef<any, UMLDiagramEditorProps>(({ selectedTool:
       {/* Scroll Controls */}
       <ScrollControls
         canvasSize={{ width: 3000, height: 3000 }}
-        viewportSize={containerSize}
+        viewportSize={{ width: 800, height: 600 }}
         scrollPosition={scrollPosition}
         onScrollChange={setScrollPosition}
       />

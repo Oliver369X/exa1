@@ -202,7 +202,6 @@ interface AIAssistantPanelProps {
 
 const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
   onGenerateDiagram,
-  onExportMermaid,
   onUploadImage,
   onGenerateBackend,
   currentDiagramData
