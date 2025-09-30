@@ -194,7 +194,6 @@ interface Message {
 
 interface AIAssistantPanelProps {
   onGenerateDiagram?: (diagramData: string) => void;
-  onExportMermaid?: () => void;
   onUploadImage?: (imageData: string) => void;
   onGenerateBackend?: () => void;
   currentDiagramData?: any;
